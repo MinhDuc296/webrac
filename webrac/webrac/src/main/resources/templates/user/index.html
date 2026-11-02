@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>WasteHeroes – Nền Tảng Tái Chế & Thu Gom Rác Thải Thông Minh</title>
+    <meta name="description" content="Hệ thống sàn giao dịch vật liệu tái sinh và giải pháp thu gom, xử lý rác thải thông minh theo mô hình kinh tế tuần hoàn.">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Custom Design System -->
+    <link th:href="@{/assets/css/styles.css}" href="/assets/css/styles.css" rel="stylesheet">
+</head>
+<body>
+
+<!-- DEMO NOTIFICATION BANNER (For GitHub Reviewers & Recruiters) -->
+<div class="demo-top-bar">
+    <div class="container d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <div>
+            <span class="badge bg-success text-white me-2">GITHUB DEMO</span>
+            <span>Tài khoản Admin: <strong>admin@wasteheroes.vn</strong> / <strong>admin123</strong></span>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <a href="/admin/dashboard" sec:authorize="hasRole('STAFF')">👉 Vào trang Admin</a>
+            <a href="/login" sec:authorize="!isAuthenticated()">👉 Đăng nhập Admin</a>
+            <span class="text-white-50">| DB: H2 Local</span>
+        </div>
+    </div>
+</div>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg navbar-custom sticky-top">
+    <div class="container">
+        <a class="navbar-brand-logo text-decoration-none" th:href="@{/}">
+            <span class="brand-icon"><i class="bi bi-recycle"></i></span>
+            <span><span class="text-success">Waste</span>Heroes</span>
+        </a>
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+            <i class="bi bi-list fs-2 text-dark"></i>
+        </button>
+        <div class="collapse navbar-collapse" id="nav">
+            <ul class="navbar-nav mx-auto mb-2 mb-lg-0 align-items-center gap-1">
+                <li class="nav-item"><a class="nav-link nav-link-custom active" th:href="@{/}">Trang chủ</a></li>
+                <li class="nav-item"><a class="nav-link nav-link-custom" th:href="@{/market}"><i class="bi bi-shop me-1"></i>Sàn Mua Bán</a></li>
+                <li class="nav-item"><a class="nav-link nav-link-custom" href="#steps">Quy trình</a></li>
+                <li class="nav-item"><a class="nav-link nav-link-custom" href="#services">Dịch vụ</a></li>
+                <li class="nav-item"><a class="nav-link nav-link-custom" href="#contact">Báo giá</a></li>
+            </ul>
+
+            <div class="d-flex align-items-center gap-2">
+                <!-- Giỏ hàng button -->
+                <a th:href="@{/cart}" class="btn btn-light position-relative rounded-pill px-3 py-2 border shadow-sm text-dark text-decoration-none me-2">
+                    <i class="bi bi-cart3 text-success me-1"></i>Giỏ hàng
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                          th:if="${session.cart != null && !#lists.isEmpty(session.cart)}"
+                          th:text="${#lists.size(session.cart)}">
+                        0
+                    </span>
+                </a>
+
+                <!-- Chưa đăng nhập -->
+                <div class="d-flex gap-2" sec:authorize="!isAuthenticated()">
+                    <a class="btn btn-outline-custom py-2 px-3" th:href="@{/login}">Đăng nhập</a>
+                    <a class="btn btn-primary-gradient py-2 px-3" th:href="@{/register}">Đăng ký</a>
+                </div>
+
+                <!-- Đã đăng nhập -->
+                <div class="d-flex align-items-center gap-2" sec:authorize="isAuthenticated()">
+                    <div class="dropdown">
+                        <button class="btn btn-light rounded-pill border dropdown-toggle d-flex align-items-center gap-2 py-1 px-3" type="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle text-success fs-5"></i>
+                            <span class="small fw-semibold" sec:authentication="name">User</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 mt-2">
+                            <li sec:authorize="hasRole('STAFF')">
+                                <a class="dropdown-item py-2" th:href="@{/admin/dashboard}"><i class="bi bi-speedometer2 me-2 text-primary"></i>Trang Quản Trị</a>
+                            </li>
+                            <li sec:authorize="hasRole('STAFF')">
+                                <a class="dropdown-item py-2" th:href="@{/admin/materials}"><i class="bi bi-boxes me-2 text-success"></i>Quản Lý Kho</a>
+                            </li>
+                            <li sec:authorize="hasRole('STAFF')">
+                                <a class="dropdown-item py-2" th:href="@{/admin/orders}"><i class="bi bi-receipt me-2 text-warning"></i>Quản Lý Đơn</a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item py-2 text-danger" th:href="@{/logout}"><i class="bi bi-box-arrow-right me-2"></i>Đăng xuất</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- HERO SECTION -->
+<header class="hero-gradient">
+    <div class="container">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-6">
+                <div class="hero-badge mb-3">
+                    <span class="pulse-dot"></span>
+                    <span>Nền tảng kinh tế tuần hoàn 4.0</span>
+                </div>
+                <h1 class="hero-title mb-4">
+                    Biến rác thải thành <span class="text-gradient">giá trị xanh</span> bền vững
+                </h1>
+                <p class="lead text-secondary mb-4">
+                    WasteHeroes kết nối doanh nghiệp và cá nhân với mạng lưới thu gom, phân loại và sàn thương mại vật liệu tái sinh chuẩn hóa hàng đầu Việt Nam.
+                </p>
+                <div class="d-flex flex-wrap gap-3 mb-4">
+                    <a class="btn btn-primary-gradient px-4 py-3" th:href="@{/market}">
+                        <i class="bi bi-cart-check me-2"></i>Khám phá Sàn Vật Liệu
+                    </a>
+                    <a class="btn btn-outline-custom px-4 py-3" href="#contact">
+                        <i class="bi bi-telephone-outbound me-2"></i>Yêu cầu thu gom
+                    </a>
+                </div>
+                
+                <div class="d-flex align-items-center gap-4 text-muted small pt-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-patch-check-fill text-success fs-5"></i>
+                        <span>Biểu giá niêm yết</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-truck text-success fs-5"></i>
+                        <span>Thu gom tận nơi</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-shield-check text-success fs-5"></i>
+                        <span>Thanh toán tức thì</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="hero-image-wrapper">
+                    <img src="https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=900&q=80"
+                         alt="Thu gom rác tái chế"
+                         onerror="this.src='https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=900&q=80'">
+                    
+                    <div class="hero-stat-card">
+                        <div class="hero-stat-item">
+                            <div class="num">12,500+</div>
+                            <div class="label">Tấn rác đã thu gom</div>
+                        </div>
+                        <div class="vr my-auto" style="height: 30px;"></div>
+                        <div class="hero-stat-item">
+                            <div class="num">150+</div>
+                            <div class="label">Doanh nghiệp đối tác</div>
+                        </div>
+                        <div class="vr my-auto" style="height: 30px;"></div>
+                        <div class="hero-stat-item">
+                            <div class="num">99.4%</div>
+                            <div class="label">Độ tinh khiết đạt chuẩn</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- FEATURED PRODUCTS SECTION -->
+<section id="products" class="py-5" th:if="${materials != null && !materials.isEmpty()}">
+    <div class="container py-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-end mb-4">
+            <div>
+                <span class="text-success fw-bold text-uppercase small tracking-wide">Kho Hàng Trực Tuyến</span>
+                <h2 class="fw-bold mt-1 mb-0">Vật Liệu Tái Chế Sẵn Sàng Giao Dịch</h2>
+            </div>
+            <a th:href="@{/market}" class="btn btn-outline-success rounded-pill px-4 mt-3 mt-md-0">
+                Xem toàn bộ kho hàng <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+        </div>
+
+        <!-- Material Cards Grid -->
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-4" th:each="item : ${materials}">
+                <div class="material-card h-100">
+                    <div class="card-img-container">
+                        <img th:src="${item.image}"
+                             th:alt="${item.name}"
+                             onerror="this.src='https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=600&q=80'">
+                        <span class="card-badge"><i class="bi bi-tag-fill me-1"></i>Chuẩn xuất khẩu</span>
+                        <span class="card-stock-badge" th:text="'Kho: ' + ${#numbers.formatDecimal(item.quantity, 0, 'COMMA', 0, 'POINT')} + ' ' + ${item.unit}">Kho: 500 kg</span>
+                    </div>
+
+                    <div class="card-body">
+                        <h3 class="card-title" th:text="${item.name}">Tên sản phẩm</h3>
+                        <p class="card-text" th:text="${item.description}">Mô tả chi tiết vật liệu...</p>
+
+                        <div class="mt-auto pt-3 border-top d-flex justify-content-between align-items-center">
+                            <div class="price-container">
+                                <span class="price-val" th:text="${#numbers.formatDecimal(item.price, 0, 'COMMA', 0, 'POINT')} + ' ₫'">12.000 ₫</span>
+                                <span class="price-unit" th:text="'/ ' + ${item.unit}">/ kg</span>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <a th:href="@{/cart/add/{id}(id=${item.id})}" class="btn btn-outline-success btn-sm rounded-pill px-3" title="Thêm vào giỏ">
+                                    <i class="bi bi-cart-plus me-1"></i>Chọn mua
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 4-STEP PROCESS SECTION -->
+<section id="steps" class="py-5 bg-white border-top border-bottom">
+    <div class="container py-4">
+        <div class="text-center max-w-700 mx-auto mb-5">
+            <span class="text-success fw-bold text-uppercase small">Quy Trình Chuẩn Hóa</span>
+            <h2 class="fw-bold mt-1">4 Bước Thu Gom & Tái Chế Dễ Dàng</h2>
+            <p class="text-secondary">Mô hình thu gom khép kín, minh bạch trọng lượng và giá cả theo thời gian thực.</p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-3">
+                <div class="step-card h-100">
+                    <div class="step-number">1</div>
+                    <h5 class="fw-bold mb-2">Đăng Ký Thu Gom</h5>
+                    <p class="text-secondary small mb-0">Điền biểu mẫu liên hệ hoặc gọi hotline, chọn loại rác thải và khối lượng dự kiến.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="step-card h-100">
+                    <div class="step-number">2</div>
+                    <h5 class="fw-bold mb-2">Cân Đo Tại Chỗ</h5>
+                    <p class="text-secondary small mb-0">Đội xe chuyên dụng WasteHeroes đến tận nơi, cân điện tử công khai và kiểm định chất lượng.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="step-card h-100">
+                    <div class="step-number">3</div>
+                    <h5 class="fw-bold mb-2">Thanh Toán Tức Thì</h5>
+                    <p class="text-secondary small mb-0">Quyết toán tiền mặt hoặc chuyển khoản ngân hàng ngay khi bốc hàng lên xe, có hóa đơn VAT.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="step-card h-100">
+                    <div class="step-number">4</div>
+                    <h5 class="fw-bold mb-2">Tái Sinh Tuần Hoàn</h5>
+                    <p class="text-secondary small mb-0">Phế liệu được làm sạch, ép kiện tiêu chuẩn và chuyển tới nhà máy tái chế nguyên sinh.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- SERVICES SECTION -->
+<section id="services" class="py-5 bg-light">
+    <div class="container py-4">
+        <div class="text-center max-w-700 mx-auto mb-5">
+            <span class="text-success fw-bold text-uppercase small">Dịch Vụ Chuyên Nghiệp</span>
+            <h2 class="fw-bold mt-1">Giải Pháp Môi Trường Toàn Diện</h2>
+            <p class="text-secondary">Đáp ứng tiêu chuẩn ESG và chứng chỉ bảo vệ môi trường cho hộ gia đình và doanh nghiệp.</p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-3">
+                <div class="service-box h-100">
+                    <div class="service-icon-wrap"><i class="bi bi-truck"></i></div>
+                    <h5 class="fw-bold mb-3">Thu gom rác công nghiệp</h5>
+                    <p class="text-secondary small">Ký hợp đồng định kỳ cho nhà xưởng, khu chế xuất với xe tải chuyên dụng 2.5 - 15 tấn.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="service-box h-100">
+                    <div class="service-icon-wrap"><i class="bi bi-shop-window"></i></div>
+                    <h5 class="fw-bold mb-3">Sàn mua bán phế liệu</h5>
+                    <p class="text-secondary small">Cung cấp nguồn vật liệu tái sinh sạch (nhựa, giấy, nhôm, đồng) ổn định cho nhà máy.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="service-box h-100">
+                    <div class="service-icon-wrap"><i class="bi bi-flower1"></i></div>
+                    <h5 class="fw-bold mb-3">Xử lý rác hữu cơ</h5>
+                    <p class="text-secondary small">Thu gom phụ phẩm nhà hàng, chợ đầu mối chuyển hóa thành phân bón vi sinh giàu dinh dưỡng.</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="service-box h-100">
+                    <div class="service-icon-wrap"><i class="bi bi-motherboard"></i></div>
+                    <h5 class="fw-bold mb-3">Rác thải điện tử (E-waste)</h5>
+                    <p class="text-secondary small">Thu hồi máy tính, bo mạch, pin hỏng an toàn, cam kết triệt tiêu kim loại nặng độc hại.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CONTACT & QUOTE SECTION -->
+<section id="contact" class="py-5 bg-white">
+    <div class="container py-4">
+        <div class="row g-5">
+            <div class="col-lg-7">
+                <span class="text-success fw-bold text-uppercase small">Hỗ Trợ Nhanh 24/7</span>
+                <h2 class="fw-bold mb-3">Liên Hệ & Báo Giá Thu Gom</h2>
+                <p class="text-secondary mb-4">Điền nhu cầu của bạn dưới đây, chuyên viên tư vấn sẽ liên hệ báo giá chỉ trong 15 phút.</p>
+
+                <div th:if="${param.sent}" class="alert alert-success d-flex align-items-center gap-2 mb-4">
+                    <i class="bi bi-check-circle-fill fs-5"></i>
+                    <div><strong>Gửi thành công!</strong> WasteHeroes đã nhận yêu cầu và sẽ liên hệ ngay cho bạn.</div>
+                </div>
+
+                <form action="/contact/submit" method="post" class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Họ và tên <span class="text-danger">*</span></label>
+                        <input type="text" name="fullName" class="form-control py-2 rounded-3" placeholder="Nguyễn Văn A" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Số điện thoại <span class="text-danger">*</span></label>
+                        <input type="tel" name="phone" class="form-control py-2 rounded-3" placeholder="0908 123 456" required>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Địa chỉ Email (tùy chọn)</label>
+                        <input type="email" name="email" class="form-control py-2 rounded-3" placeholder="email@company.vn">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Loại rác & Dịch vụ quan tâm</label>
+                        <div class="d-flex flex-wrap gap-3 p-3 border rounded-3 bg-light">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="topics" value="Rác tái chế" id="t1" checked>
+                                <label class="form-check-label" for="t1">Rác tái chế (Nhựa, Giấy, Kim loại)</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="topics" value="Rác hữu cơ" id="t2">
+                                <label class="form-check-label" for="t2">Rác hữu cơ / Thực phẩm</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="topics" value="Rác điện tử" id="t3">
+                                <label class="form-check-label" for="t3">Rác thải điện tử (E-waste)</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Mô tả khối lượng & Địa điểm thu gom</label>
+                        <textarea name="content" class="form-control rounded-3" rows="3" placeholder="Ví dụ: Khoảng 500kg thùng carton và 200kg sắt vụn tại KCN Tân Bình..."></textarea>
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary-gradient w-100 py-3 fs-6">
+                            <i class="bi bi-send-fill me-2"></i>Gửi Yêu Cầu Báo Giá
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="p-4 bg-light rounded-4 border h-100 d-flex flex-column justify-content-between">
+                    <div>
+                        <h4 class="fw-bold mb-4">Văn Phòng WasteHeroes</h4>
+                        <div class="d-flex align-items-start gap-3 mb-3">
+                            <div class="text-success fs-5"><i class="bi bi-geo-alt-fill"></i></div>
+                            <div>
+                                <strong class="d-block text-dark">Trụ sở chính:</strong>
+                                <span class="text-secondary small">Khu Công Nghệ Cao, TP. Thủ Đức, TP. Hồ Chí Minh</span>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-start gap-3 mb-3">
+                            <div class="text-success fs-5"><i class="bi bi-telephone-fill"></i></div>
+                            <div>
+                                <strong class="d-block text-dark">Hotline hỗ trợ 24/7:</strong>
+                                <a href="tel:0377294114" class="text-success fw-bold text-decoration-none">0377.294.114</a>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-start gap-3 mb-3">
+                            <div class="text-success fs-5"><i class="bi bi-envelope-fill"></i></div>
+                            <div>
+                                <strong class="d-block text-dark">Email liên hệ:</strong>
+                                <span class="text-secondary small">contact@wasteheroes.vn</span>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-start gap-3 mb-4">
+                            <div class="text-success fs-5"><i class="bi bi-clock-fill"></i></div>
+                            <div>
+                                <strong class="d-block text-dark">Giờ làm việc:</strong>
+                                <span class="text-secondary small">Thứ 2 - Chủ Nhật: 07:00 - 19:00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-3 bg-white rounded-3 border">
+                        <div class="d-flex align-items-center gap-3">
+                            <i class="bi bi-shield-shaded text-success fs-2"></i>
+                            <div>
+                                <h6 class="fw-bold mb-1">Cam Kết Môi Trường</h6>
+                                <p class="text-muted small mb-0">100% rác thu gom được truy xuất nguồn gốc và đưa vào quy trình tái chế tiêu chuẩn ISO 14001.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer-custom">
+    <div class="container">
+        <div class="row g-4 mb-5">
+            <div class="col-lg-4">
+                <a class="navbar-brand-logo text-white text-decoration-none mb-3 d-inline-flex" href="#">
+                    <span class="brand-icon"><i class="bi bi-recycle"></i></span>
+                    <span>WasteHeroes</span>
+                </a>
+                <p class="small text-secondary mb-3">
+                    Nền tảng số tiên phong kết nối chuỗi cung ứng vật liệu tái chế và thu gom rác thông minh tại Việt Nam. Xây dựng tương lai xanh không rác thải.
+                </p>
+                <div class="d-flex gap-2">
+                    <span class="badge bg-secondary">Java 21</span>
+                    <span class="badge bg-secondary">Spring Boot 3</span>
+                    <span class="badge bg-secondary">Thymeleaf</span>
+                    <span class="badge bg-secondary">H2 Database</span>
+                </div>
+            </div>
+
+            <div class="col-6 col-lg-2">
+                <h5>Khám Phá</h5>
+                <ul class="list-unstyled small">
+                    <li class="mb-2"><a th:href="@{/}">Trang chủ</a></li>
+                    <li class="mb-2"><a th:href="@{/market}">Sàn mua bán</a></li>
+                    <li class="mb-2"><a th:href="@{/cart}">Giỏ hàng</a></li>
+                    <li class="mb-2"><a href="#steps">Quy trình</a></li>
+                </ul>
+            </div>
+
+            <div class="col-6 col-lg-2">
+                <h5>Quản Trị</h5>
+                <ul class="list-unstyled small">
+                    <li class="mb-2"><a th:href="@{/admin/dashboard}">Admin Dashboard</a></li>
+                    <li class="mb-2"><a th:href="@{/admin/materials}">Quản lý kho</a></li>
+                    <li class="mb-2"><a th:href="@{/admin/orders}">Quản lý đơn hàng</a></li>
+                    <li class="mb-2"><a th:href="@{/h2-console}">H2 Web Console</a></li>
+                </ul>
+            </div>
+
+            <div class="col-lg-4">
+                <h5>Tài Liệu Dự Án (Portfolio)</h5>
+                <p class="small text-secondary mb-3">
+                    Dự án được xây dựng với kiến trúc chuẩn Spring Framework, xác thực phân quyền Role-based Spring Security, mô hình MVC và Hibernate JPA.
+                </p>
+                <div class="p-3 rounded-3 bg-secondary bg-opacity-25 small">
+                    <div>👨‍💻 <strong>GitHub Showcase Demo Project</strong></div>
+                    <div class="text-white-50 mt-1">Được thiết kế tối ưu cho CV & Portfolio cá nhân.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="pt-4 border-top border-secondary border-opacity-25 d-flex flex-wrap justify-content-between align-items-center small text-secondary">
+            <div>© 2026 WasteHeroes. All rights reserved.</div>
+            <div>Built with ❤️ for a Cleaner Planet</div>
+        </div>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

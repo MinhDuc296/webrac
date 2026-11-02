@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sàn Mua Bán Vật Liệu Tái Sinh – WasteHeroes</title>
+    <!-- Bootstrap 5 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Custom Design System -->
+    <link th:href="@{/assets/css/styles.css}" href="/assets/css/styles.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<!-- DEMO NOTIFICATION BANNER -->
+<div class="demo-top-bar">
+    <div class="container d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <div>
+            <span class="badge bg-success text-white me-2">GITHUB DEMO</span>
+            <span>Tài khoản Admin: <strong>admin@wasteheroes.vn</strong> / <strong>admin123</strong></span>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <a href="/admin/dashboard" sec:authorize="hasRole('STAFF')">👉 Vào trang Admin</a>
+            <a href="/login" sec:authorize="!isAuthenticated()">👉 Đăng nhập Admin</a>
+            <span class="text-white-50">| DB: H2 Local</span>
+        </div>
+    </div>
+</div>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg navbar-custom sticky-top">
+    <div class="container">
+        <a class="navbar-brand-logo text-decoration-none" th:href="@{/}">
+            <span class="brand-icon"><i class="bi bi-recycle"></i></span>
+            <span><span class="text-success">Waste</span>Heroes</span>
+        </a>
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+            <i class="bi bi-list fs-2 text-dark"></i>
+        </button>
+        <div class="collapse navbar-collapse" id="nav">
+            <ul class="navbar-nav mx-auto mb-2 mb-lg-0 align-items-center gap-1">
+                <li class="nav-item"><a class="nav-link nav-link-custom" th:href="@{/}">Trang chủ</a></li>
+                <li class="nav-item"><a class="nav-link nav-link-custom active" th:href="@{/market}"><i class="bi bi-shop me-1"></i>Sàn Mua Bán</a></li>
+                <li class="nav-item"><a class="nav-link nav-link-custom" href="/#steps">Quy trình</a></li>
+                <li class="nav-item"><a class="nav-link nav-link-custom" href="/#services">Dịch vụ</a></li>
+                <li class="nav-item"><a class="nav-link nav-link-custom" href="/#contact">Báo giá</a></li>
+            </ul>
+
+            <div class="d-flex align-items-center gap-2">
+                <a th:href="@{/cart}" class="btn btn-light position-relative rounded-pill px-3 py-2 border shadow-sm text-dark text-decoration-none me-2">
+                    <i class="bi bi-cart3 text-success me-1"></i>Giỏ hàng
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                          th:if="${session.cart != null && !#lists.isEmpty(session.cart)}"
+                          th:text="${#lists.size(session.cart)}">
+                        0
+                    </span>
+                </a>
+
+                <div class="d-flex gap-2" sec:authorize="!isAuthenticated()">
+                    <a class="btn btn-outline-custom py-2 px-3" th:href="@{/login}">Đăng nhập</a>
+                    <a class="btn btn-primary-gradient py-2 px-3" th:href="@{/register}">Đăng ký</a>
+                </div>
+
+                <div class="d-flex align-items-center gap-2" sec:authorize="isAuthenticated()">
+                    <div class="dropdown">
+                        <button class="btn btn-light rounded-pill border dropdown-toggle d-flex align-items-center gap-2 py-1 px-3" type="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle text-success fs-5"></i>
+                            <span class="small fw-semibold" sec:authentication="name">User</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 mt-2">
+                            <li sec:authorize="hasRole('STAFF')">
+                                <a class="dropdown-item py-2" th:href="@{/admin/dashboard}"><i class="bi bi-speedometer2 me-2 text-primary"></i>Trang Quản Trị</a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item py-2 text-danger" th:href="@{/logout}"><i class="bi bi-box-arrow-right me-2"></i>Đăng xuất</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- MARKET HEADER -->
+<div class="bg-white border-bottom py-5">
+    <div class="container text-center max-w-700 mx-auto">
+        <span class="badge bg-success-subtle text-success fw-bold px-3 py-2 rounded-pill mb-2">
+            <i class="bi bi-shield-check me-1"></i>Nguồn hàng đã kiểm định chất lượng
+        </span>
+        <h1 class="fw-bold mb-2">Kho Vật Liệu Tái Sinh Chuẩn Hóa</h1>
+        <p class="text-secondary mb-4">Cung ứng định kỳ cho các nhà máy bao bì, đúc kim loại, sản xuất hạt nhựa tái sinh.</p>
+
+        <!-- Live Search Bar -->
+        <div class="input-group input-group-lg shadow-sm rounded-pill overflow-hidden border mx-auto" style="max-width: 550px;">
+            <span class="input-group-text bg-white border-0 ps-4 text-muted"><i class="bi bi-search"></i></span>
+            <input type="text" id="searchInput" class="form-control border-0 shadow-none ps-2" placeholder="Tìm theo tên vật liệu (nhựa, carton, đồng, nhôm...)" onkeyup="filterItems()">
+            <button class="btn btn-success px-4" type="button">Tìm kiếm</button>
+        </div>
+
+        <div th:if="${param.success}" class="alert alert-success mt-4 d-inline-flex align-items-center gap-2 shadow-sm rounded-pill px-4">
+            <i class="bi bi-check-circle-fill fs-5"></i>
+            <span>🎉 <strong>Đặt hàng thành công!</strong> Đơn hàng đã được lưu và nhân viên sẽ liên hệ điều phối xe giao hàng ngay.</span>
+        </div>
+    </div>
+</div>
+
+<!-- MARKET PRODUCTS GRID -->
+<div class="container py-5">
+    <div class="row g-4" id="materialsGrid">
+        <div class="col-md-6 col-lg-4 material-item" th:each="item : ${materials}">
+            <div class="material-card h-100">
+                <div class="card-img-container">
+                    <img th:src="${item.image}"
+                         th:alt="${item.name}"
+                         class="material-img"
+                         onerror="this.src='https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=600&q=80'">
+                    <span class="card-badge"><i class="bi bi-patch-check-fill me-1"></i>Sẵn sàng giao</span>
+                    <span class="card-stock-badge" th:text="'Kho: ' + ${#numbers.formatDecimal(item.quantity, 0, 'COMMA', 0, 'POINT')} + ' ' + ${item.unit}">Kho: 500 kg</span>
+                </div>
+
+                <div class="card-body">
+                    <h3 class="card-title item-name" th:text="${item.name}">Tên sản phẩm</h3>
+                    <p class="card-text" th:text="${item.description}">Mô tả ngắn...</p>
+
+                    <div class="mt-auto pt-3 border-top">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div class="price-container">
+                                <span class="price-val" th:text="${#numbers.formatDecimal(item.price, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</span>
+                                <span class="price-unit" th:text="'/ ' + ${item.unit}">/ kg</span>
+                            </div>
+                            <span class="badge bg-success-subtle text-success small px-2 py-1 rounded">Bán buôn & lẻ</span>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <a th:href="@{/cart/add/{id}(id=${item.id})}" class="btn btn-primary-gradient py-2 fw-semibold">
+                                <i class="bi bi-cart-plus me-1"></i>Thêm vào giỏ hàng
+                            </a>
+                            <div class="d-flex gap-2">
+                                <a href="tel:0377294114" class="btn btn-light border flex-grow-1 small py-2">
+                                    <i class="bi bi-telephone text-primary me-1"></i>Gọi hotline
+                                </a>
+                                <a href="https://zalo.me/0377294114" target="_blank" class="btn btn-light border flex-grow-1 small py-2">
+                                    <i class="bi bi-chat-dots text-success me-1"></i>Chat Zalo
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Empty search message -->
+    <div id="noResults" class="text-center py-5 d-none">
+        <div class="py-5">
+            <i class="bi bi-search text-muted display-1"></i>
+            <h4 class="mt-3 text-secondary">Không tìm thấy vật liệu phù hợp</h4>
+            <p class="text-muted">Hãy thử tìm với từ khóa khác như "nhựa", "carton", "đồng", "nhôm", "thép".</p>
+        </div>
+    </div>
+</div>
+
+<footer class="footer-custom">
+    <div class="container text-center small text-secondary">
+        <div>© 2026 WasteHeroes – Sàn Giao Dịch Vật Liệu Tái Sinh Chuẩn Hóa.</div>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function filterItems() {
+        const input = document.getElementById('searchInput').value.toLowerCase().trim();
+        const items = document.querySelectorAll('.material-item');
+        let countVisible = 0;
+
+        items.forEach(item => {
+            const name = item.querySelector('.item-name').innerText.toLowerCase();
+            const desc = item.querySelector('.card-text').innerText.toLowerCase();
+            if (name.includes(input) || desc.includes(input)) {
+                item.style.display = 'block';
+                countVisible++;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+
+        document.getElementById('noResults').className = countVisible === 0 ? 'text-center py-5 d-block' : 'text-center py-5 d-none';
+    }
+</script>
+</body>
+</html>

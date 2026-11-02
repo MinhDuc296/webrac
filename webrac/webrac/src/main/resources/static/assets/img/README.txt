@@ -1,0 +1,1 @@
+Place your images here. Suggested files: hero-placeholder.svg, bin-home.jpg, bin-business.jpg, bin-mobile.jpg, about.jpg
